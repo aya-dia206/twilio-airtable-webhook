@@ -5,9 +5,16 @@ import fetch from "node-fetch";
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Health check endpoint for Render free-tier
+app.get("/healthz", (req, res) => {
+  res.send("OK");
+});
+
+// Twilio WhatsApp webhook endpoint
 app.post("/twilio-webhook", async (req, res) => {
   try {
     const from = req.body.From;
@@ -15,6 +22,7 @@ app.post("/twilio-webhook", async (req, res) => {
 
     if (!from || !body) return res.status(400).send("Missing From or Body");
 
+    // Prepare Airtable API request
     const airtableUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_TABLE_NAME}`;
     const payload = {
       fields: {
@@ -24,6 +32,7 @@ app.post("/twilio-webhook", async (req, res) => {
       },
     };
 
+    // Send data to Airtable
     const response = await fetch(airtableUrl, {
       method: "POST",
       headers: {
@@ -48,4 +57,6 @@ app.post("/twilio-webhook", async (req, res) => {
   }
 });
 
+// Start server
 app.listen(port, () => console.log(`Server running on port ${port}`));
+
